@@ -2,6 +2,8 @@ import RPi.GPIO as GPIO
 import time
 import random
 import keyboard  # Import the keyboard library
+import threading
+import os  # For clearing the terminal
 
 # GPIO Pins for Shift Registers
 SDI = 17   # Serial data input
@@ -10,6 +12,7 @@ SRCLK = 27 # Clock pin
 
 # Game Configuration
 MATRIX_SIZE = 8
+MOVE_INTERVAL = 0.5  # Time in seconds between moves
 
 # Directions
 UP = (0, -1)
@@ -20,9 +23,10 @@ RIGHT = (1, 0)
 class SnakeGame:
     def __init__(self):
         # Initial state of the game
-        self.snake = [(3, 3)]  # Initial position of the snake
+        self.snake = [(3, 3), (3, 2), (3, 1)]  # Initial position of the snake (length 3)
         self.food = self.generate_food()
         self.direction = RIGHT
+        self.running = True
 
         # GPIO Setup
         GPIO.setmode(GPIO.BCM)
@@ -32,6 +36,10 @@ class SnakeGame:
         GPIO.output(SDI, GPIO.LOW)
         GPIO.output(RCLK, GPIO.LOW)
         GPIO.output(SRCLK, GPIO.LOW)
+
+        # Start the input thread
+        self.input_thread = threading.Thread(target=self.change_direction)
+        self.input_thread.start()
 
     def generate_food(self):
         while True:
@@ -47,29 +55,44 @@ class SnakeGame:
             time.sleep(0.001)
             GPIO.output(SRCLK, GPIO.LOW)
 
-    def update_matrix(self):
-        # Create an 8x8 matrix representation
-        matrix = [0] * MATRIX_SIZE
-        for x, y in self.snake:
-            matrix[y] |= (1 << x)
-        matrix[self.food[1]] |= (1 << self.food[0])
+    def display_matrix(self):
+        os.system('clear')  # Clear the terminal
+        for y in range(MATRIX_SIZE):
+            row = ""
+            for x in range(MATRIX_SIZE):
+                if (x, y) in self.snake:
+                    row += "S"  # Snake segment
+                elif (x, y) == self.food:
+                    row += "F"  # Food
+                else:
+                    row += "."  # Empty space
+            print(row)
 
-        # Send data to the shift registers
+    def update_matrix(self):
+        # Send data to the shift registers (optional)
         GPIO.output(RCLK, GPIO.LOW)
-        for row in matrix:
-            self.shift_out(~row)  # Active LOW, invert bits
-            self.shift_out(1 << matrix.index(row))
+        for row in range(MATRIX_SIZE):
+            row_data = 0
+            for x in range(MATRIX_SIZE):
+                if (x, row) in self.snake:
+                    row_data |= (1 << x)
+                elif (x, row) == self.food:
+                    row_data |= (1 << x)  # Could also handle food separately if needed
+            self.shift_out(~row_data)  # Active LOW, invert bits
+            self.shift_out(1 << row)  # Shift row indicator
         GPIO.output(RCLK, GPIO.HIGH)
 
     def change_direction(self):
-        if keyboard.is_pressed('up') and self.direction != DOWN:
-            self.direction = UP
-        elif keyboard.is_pressed('down') and self.direction != UP:
-            self.direction = DOWN
-        elif keyboard.is_pressed('left') and self.direction != RIGHT:
-            self.direction = LEFT
-        elif keyboard.is_pressed('right') and self.direction != LEFT:
-            self.direction = RIGHT
+        while self.running:
+            if keyboard.is_pressed('up') and self.direction != DOWN:
+                self.direction = UP
+            elif keyboard.is_pressed('down') and self.direction != UP:
+                self.direction = DOWN
+            elif keyboard.is_pressed('left') and self.direction != RIGHT:
+                self.direction = LEFT
+            elif keyboard.is_pressed('right') and self.direction != LEFT:
+                self.direction = RIGHT
+            time.sleep(0.1)  # Short sleep to prevent busy waiting
 
     def move_snake(self):
         head_x, head_y = self.snake[0]
@@ -81,6 +104,7 @@ class SnakeGame:
             new_head[0] < 0 or new_head[0] >= MATRIX_SIZE or
             new_head[1] < 0 or new_head[1] >= MATRIX_SIZE):
             print("Game Over!")
+            self.running = False  # Stop the game loop
             GPIO.cleanup()
             exit()
 
@@ -95,12 +119,14 @@ class SnakeGame:
 
     def run(self):
         try:
-            while True:
-                self.change_direction()  # Check for key presses
+            while self.running:
                 self.move_snake()
+                self.display_matrix()  # Display the matrix in the terminal
                 self.update_matrix()
-                time.sleep(0.5)  # Adjust speed as needed
+                time.sleep(MOVE_INTERVAL)  # Wait for the specified move interval
+
         except KeyboardInterrupt:
+            self.running = False
             GPIO.cleanup()
 
 if __name__ == '__main__':
