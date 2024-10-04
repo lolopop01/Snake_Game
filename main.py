@@ -1,17 +1,12 @@
 import RPi.GPIO as GPIO
 import time
 import random
+import keyboard  # Import the keyboard library
 
 # GPIO Pins for Shift Registers
 SDI = 17   # Serial data input
 RCLK = 18  # Latch pin
 SRCLK = 27 # Clock pin
-
-# GPIO Button Pins for Direction Control
-UP_PIN = 5
-DOWN_PIN = 6
-LEFT_PIN = 13
-RIGHT_PIN = 19
 
 # Game Configuration
 MATRIX_SIZE = 8
@@ -37,17 +32,6 @@ class SnakeGame:
         GPIO.output(SDI, GPIO.LOW)
         GPIO.output(RCLK, GPIO.LOW)
         GPIO.output(SRCLK, GPIO.LOW)
-
-        GPIO.setup(UP_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-        GPIO.setup(DOWN_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-        GPIO.setup(LEFT_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-        GPIO.setup(RIGHT_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-
-        # Register button press callbacks
-        GPIO.add_event_detect(UP_PIN, GPIO.FALLING, callback=self.change_direction, bouncetime=200)
-        GPIO.add_event_detect(DOWN_PIN, GPIO.FALLING, callback=self.change_direction, bouncetime=200)
-        GPIO.add_event_detect(LEFT_PIN, GPIO.FALLING, callback=self.change_direction, bouncetime=200)
-        GPIO.add_event_detect(RIGHT_PIN, GPIO.FALLING, callback=self.change_direction, bouncetime=200)
 
     def generate_food(self):
         while True:
@@ -77,14 +61,14 @@ class SnakeGame:
             self.shift_out(1 << matrix.index(row))
         GPIO.output(RCLK, GPIO.HIGH)
 
-    def change_direction(self, channel):
-        if channel == UP_PIN and self.direction != DOWN:
+    def change_direction(self):
+        if keyboard.is_pressed('up') and self.direction != DOWN:
             self.direction = UP
-        elif channel == DOWN_PIN and self.direction != UP:
+        elif keyboard.is_pressed('down') and self.direction != UP:
             self.direction = DOWN
-        elif channel == LEFT_PIN and self.direction != RIGHT:
+        elif keyboard.is_pressed('left') and self.direction != RIGHT:
             self.direction = LEFT
-        elif channel == RIGHT_PIN and self.direction != LEFT:
+        elif keyboard.is_pressed('right') and self.direction != LEFT:
             self.direction = RIGHT
 
     def move_snake(self):
@@ -112,6 +96,7 @@ class SnakeGame:
     def run(self):
         try:
             while True:
+                self.change_direction()  # Check for key presses
                 self.move_snake()
                 self.update_matrix()
                 time.sleep(0.5)  # Adjust speed as needed
