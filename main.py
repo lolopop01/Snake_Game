@@ -41,6 +41,13 @@ class SnakeGame:
         self.input_thread = threading.Thread(target=self.change_direction)
         self.input_thread.start()
 
+        # Start the display thread
+        self.display_thread = threading.Thread(target=self.update_matrix)
+        self.display_thread.start()
+
+        # Start the display console thread
+        self.display_console_thread = threading.Thread(target=self.display_matrix)
+
     def generate_food(self):
         while True:
             food = (random.randint(0, MATRIX_SIZE - 1), random.randint(0, MATRIX_SIZE - 1))
@@ -55,6 +62,7 @@ class SnakeGame:
             time.sleep(0.001)
             GPIO.output(SRCLK, GPIO.LOW)
 
+    # Display the matrix in the terminal
     def display_matrix(self):
         os.system('clear')  # Clear the terminal
         for y in range(MATRIX_SIZE):
@@ -121,10 +129,7 @@ class SnakeGame:
         try:
             while self.running:
                 self.move_snake()
-                self.display_matrix()  # Display the matrix in the terminal
-                self.update_matrix()
                 time.sleep(MOVE_INTERVAL)  # Wait for the specified move interval
-
         except KeyboardInterrupt:
             self.running = False
             GPIO.cleanup()
