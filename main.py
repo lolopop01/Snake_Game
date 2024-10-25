@@ -47,6 +47,7 @@ class SnakeGame:
 
         # Start the display console thread
         self.display_console_thread = threading.Thread(target=self.display_matrix)
+        self.display_console_thread.start()
 
     def generate_food(self):
         while True:
@@ -64,31 +65,35 @@ class SnakeGame:
 
     # Display the matrix in the terminal
     def display_matrix(self):
-        os.system('clear')  # Clear the terminal
-        for y in range(MATRIX_SIZE):
-            row = ""
-            for x in range(MATRIX_SIZE):
-                if (x, y) in self.snake:
-                    row += "S"  # Snake segment
-                elif (x, y) == self.food:
-                    row += "F"  # Food
-                else:
-                    row += "."  # Empty space
-            print(row)
+        while self.running:
+            os.system('clear')  # Clear the terminal
+            for y in range(MATRIX_SIZE):
+                row = ""
+                for x in range(MATRIX_SIZE):
+                    if (x, y) in self.snake:
+                        row += "S"  # Snake segment
+                    elif (x, y) == self.food:
+                        row += "F"  # Food
+                    else:
+                        row += "."  # Empty space
+                print(row)
+            time.sleep(0.1)
 
     def update_matrix(self):
-        # Send data to the shift registers (optional)
-        GPIO.output(RCLK, GPIO.LOW)
-        for row in range(MATRIX_SIZE):
-            row_data = 0
-            for x in range(MATRIX_SIZE):
-                if (x, row) in self.snake:
-                    row_data |= (1 << x)
-                elif (x, row) == self.food:
-                    row_data |= (1 << x)  # Could also handle food separately if needed
-            self.shift_out(~row_data)  # Active LOW, invert bits
-            self.shift_out(1 << row)  # Shift row indicator
-        GPIO.output(RCLK, GPIO.HIGH)
+        while self.running:
+            # Send data to the shift registers (optional)
+            GPIO.output(RCLK, GPIO.LOW)
+            for row in range(MATRIX_SIZE):
+                row_data = 0
+                for x in range(MATRIX_SIZE):
+                    if (x, row) in self.snake:
+                        row_data |= (1 << x)
+                    elif (x, row) == self.food:
+                        row_data |= (1 << x)  # Could also handle food separately if needed
+                self.shift_out(~row_data)  # Active LOW, invert bits
+                self.shift_out(1 << row)  # Shift row indicator
+            GPIO.output(RCLK, GPIO.HIGH)
+            time.sleep(0.001)
 
     def change_direction(self):
         while self.running:
