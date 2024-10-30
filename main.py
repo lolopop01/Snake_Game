@@ -144,6 +144,9 @@ class SnakeGame:
                 time.sleep(MOVE_INTERVAL)  # Wait for the specified move interval
         except KeyboardInterrupt:
             self.running = False
+            self.display_console_thread.join()
+            self.display_thread.join()
+            self.input_thread.join()
             GPIO.cleanup()
 
 if __name__ == '__main__':
