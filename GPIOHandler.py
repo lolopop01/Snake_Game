@@ -30,7 +30,7 @@ class GPIOHandler:
         for bit in range(8):
             GPIO.output(self.SDI, (data >> (7 - bit)) & 1)
             GPIO.output(self.SRCLK, GPIO.HIGH)
-            time.sleep(0.00000001)
+            time.sleep(0.00001)
             GPIO.output(self.SRCLK, GPIO.LOW)
 
     def update_matrix(self, snake, food):

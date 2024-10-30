@@ -68,7 +68,6 @@ class SnakeGame:
     def update_display(self):
         while self.running:
             self.gpio_handler.update_matrix(self.snake, self.food)
-            time.sleep(0.01)  # Delay for 10 milliseconds
 
     def change_direction(self):
         while self.running:
