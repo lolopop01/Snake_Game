@@ -93,14 +93,11 @@ class SnakeGame:
 
                 # Send data to the shift registers
                 GPIO.output(RCLK, GPIO.LOW)
-                self.shift_out(~row_data)  # Active LOW, invert bits
-                self.shift_out(1 << row)  # Shift row indicator
+                self.shift_out(~row_data)
+                self.shift_out(1 << row)
                 GPIO.output(RCLK, GPIO.HIGH)
 
                 time.sleep(0.01)  # Delay for 10 milliseconds
-
-            # Optionally add a delay after completing one full pass of the matrix
-            time.sleep(0.1)  # Optional delay before the next full refresh
 
     def change_direction(self):
         while self.running:
