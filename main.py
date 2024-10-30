@@ -60,13 +60,12 @@ class SnakeGame:
         for bit in range(8):
             GPIO.output(SDI, (data >> (7 - bit)) & 1)
             GPIO.output(SRCLK, GPIO.HIGH)
-            time.sleep(0.001)
+            time.sleep(0.00000001)
             GPIO.output(SRCLK, GPIO.LOW)
 
     # Display the matrix in the terminal
     def display_matrix(self):
         while self.running:
-            time.sleep(0.1)
             os.system('clear')  # Clear the terminal
             for y in range(MATRIX_SIZE):
                 row = ""
@@ -96,8 +95,6 @@ class SnakeGame:
                 self.shift_out(~row_data)
                 self.shift_out(1 << row)
                 GPIO.output(RCLK, GPIO.HIGH)
-
-                time.sleep(0.01)  # Delay for 10 milliseconds
 
     def change_direction(self):
         while self.running:
