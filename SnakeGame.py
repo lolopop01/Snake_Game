@@ -22,7 +22,7 @@ class SnakeGame:
         self.direction = RIGHT
         self.running = True
 
-        self.gpio_handler = GPIOHandler(SDI, RCLK, SRCLK)
+        self.gpio_handler = GPIOHandler()
 
         # Start the input thread
         self.input_thread = threading.Thread(target=self.change_direction)

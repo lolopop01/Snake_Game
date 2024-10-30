@@ -12,6 +12,9 @@ MATRIX_SIZE = 8
 
 class GPIOHandler:
     def __init__(self):
+        self.SDI = SDI
+        self.RCLK = RCLK
+        self.SRCLK = SRCLK
 
         GPIO.setmode(GPIO.BCM)
         GPIO.setup(self.SDI, GPIO.OUT)
