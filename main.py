@@ -81,19 +81,26 @@ class SnakeGame:
 
     def update_matrix(self):
         while self.running:
-            # Send data to the shift registers (optional)
-            GPIO.output(RCLK, GPIO.LOW)
+            # Loop through each row of the matrix
             for row in range(MATRIX_SIZE):
+                # Prepare data for the current row
                 row_data = 0
                 for x in range(MATRIX_SIZE):
                     if (x, row) in self.snake:
                         row_data |= (1 << x)
                     elif (x, row) == self.food:
-                        row_data |= (1 << x)  # Could also handle food separately if needed
+                        row_data |= (1 << x)  # Handle food separately if needed
+
+                # Send data to the shift registers
+                GPIO.output(RCLK, GPIO.LOW)
                 self.shift_out(~row_data)  # Active LOW, invert bits
                 self.shift_out(1 << row)  # Shift row indicator
-            GPIO.output(RCLK, GPIO.HIGH)
-            time.sleep(0.001)
+                GPIO.output(RCLK, GPIO.HIGH)
+
+                time.sleep(0.01)  # Delay for 10 milliseconds
+
+            # Optionally add a delay after completing one full pass of the matrix
+            time.sleep(0.1)  # Optional delay before the next full refresh
 
     def change_direction(self):
         while self.running:
