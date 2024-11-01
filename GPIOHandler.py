@@ -12,6 +12,7 @@ MATRIX_SIZE = 8
 
 class GPIOHandler:
     def __init__(self):
+        self.food_flash_counter = None
         self.SDI = SDI
         self.RCLK = RCLK
         self.SRCLK = SRCLK
@@ -34,15 +35,19 @@ class GPIOHandler:
             GPIO.output(self.SRCLK, GPIO.LOW)
 
     def update_matrix(self, snake, food):
+        if not hasattr(self, 'food_flash_counter'):
+            self.food_flash_counter = 0
+        self.food_flash_counter += 1
+        flash_food = (self.food_flash_counter // 10) % 2 == 0
+
         for row in range(MATRIX_SIZE):
             row_data = 0
             for x in range(MATRIX_SIZE):
                 if (x, row) in snake:
                     row_data |= (1 << x)
-                elif (x, row) == food:
-                    row_data |= (1 << x)  # Handle food separately if needed
+                elif (x, row) == food and flash_food:
+                    row_data |= (1 << x)
 
-            # Send data to the shift registers
             GPIO.output(self.RCLK, GPIO.LOW)
             self.shift_out(~row_data)
             self.shift_out(1 << row)
