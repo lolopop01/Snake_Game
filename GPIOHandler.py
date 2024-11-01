@@ -12,10 +12,10 @@ MATRIX_SIZE = 8
 
 class GPIOHandler:
     def __init__(self):
-        self.food_flash_counter = None
         self.SDI = SDI
         self.RCLK = RCLK
         self.SRCLK = SRCLK
+        self.food_flash_counter: int = 0
 
         GPIO.setmode(GPIO.BCM)
         GPIO.setup(self.SDI, GPIO.OUT)
@@ -37,8 +37,8 @@ class GPIOHandler:
     def update_matrix(self, snake, food):
         if not hasattr(self, 'food_flash_counter'):
             self.food_flash_counter = 0
-        self.food_flash_counter += 1
-        flash_food = (self.food_flash_counter // 10) % 2 == 0
+        self.food_flash_counter = (self.food_flash_counter + 1) % 20
+        flash_food = self.food_flash_counter < 10
 
         for row in range(MATRIX_SIZE):
             row_data = 0
