@@ -35,8 +35,6 @@ class GPIOHandler:
             GPIO.output(self.SRCLK, GPIO.LOW)
 
     def update_matrix(self, snake, food):
-        if not hasattr(self, 'food_flash_counter'):
-            self.food_flash_counter = 0
         self.food_flash_counter = (self.food_flash_counter + 1) % 20
         flash_food = self.food_flash_counter < 10
 
