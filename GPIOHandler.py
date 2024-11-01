@@ -48,5 +48,14 @@ class GPIOHandler:
             self.shift_out(1 << row)
             GPIO.output(self.RCLK, GPIO.HIGH)
 
+    def clear_matrix(self):
+        GPIO.output(self.RCLK, GPIO.LOW)
+        for _ in range(MATRIX_SIZE):
+            self.shift_out(0xFF)
+            self.shift_out(0)
+        GPIO.output(self.RCLK, GPIO.HIGH)
+
     def cleanup(self):
+        self.clear_matrix()
         GPIO.cleanup()
+

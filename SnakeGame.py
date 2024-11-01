@@ -1,3 +1,5 @@
+from pickle import FALSE
+
 from GPIOHandler import *
 import time
 import random
@@ -13,7 +15,7 @@ RIGHT = (1, 0)
 
 # Game Configuration
 MATRIX_SIZE = 8
-MOVE_INTERVAL = 0.5  # Time in seconds between moves
+MOVE_INTERVAL = 0.4 # Time in seconds between moves
 
 class SnakeGame:
     def __init__(self):
@@ -68,6 +70,7 @@ class SnakeGame:
     def update_display(self):
         while self.running:
             self.gpio_handler.update_matrix(self.snake, self.food)
+
 
     def change_direction(self):
         while self.running:
