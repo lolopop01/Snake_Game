@@ -15,7 +15,7 @@ RIGHT = (1, 0)
 
 # Game Configuration
 MATRIX_SIZE = 8
-MOVE_INTERVAL = 0.4 # Time in seconds between moves
+MOVE_INTERVAL = 0.3 # Time in seconds between moves
 
 class SnakeGame:
     def __init__(self):
