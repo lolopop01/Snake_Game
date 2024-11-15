@@ -1,5 +1,8 @@
+from cgitb import handler
 from pickle import FALSE
+from unittest.mock import DEFAULT
 
+from WiiRemoteHandler import WiiRemoteHandler
 from GPIOHandler import *
 import time
 import random
@@ -25,6 +28,7 @@ class SnakeGame:
         self.running = True
 
         self.gpio_handler = GPIOHandler()
+        self.wii_remote_handler = WiiRemoteHandler()
 
         # Start the input thread
         self.input_thread = threading.Thread(target=self.change_direction)
@@ -74,15 +78,8 @@ class SnakeGame:
 
     def change_direction(self):
         while self.running:
-            if keyboard.is_pressed('up') and self.direction != DOWN:
-                self.direction = UP
-            elif keyboard.is_pressed('down') and self.direction != UP:
-                self.direction = DOWN
-            elif keyboard.is_pressed('left') and self.direction != RIGHT:
-                self.direction = LEFT
-            elif keyboard.is_pressed('right') and self.direction != LEFT:
-                self.direction = RIGHT
-            time.sleep(0.1)  # Short sleep to prevent busy waiting
+            self.direction = self.wii_remote_handler.get_direction()
+            time.sleep(0.1)
 
     def move_snake(self):
         head_x, head_y = self.snake[0]
