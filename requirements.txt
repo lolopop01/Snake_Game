@@ -1,0 +1,6 @@
+evdev==1.7.1
+hidapi==0.14.0.post3
+keyboard==0.13.5
+PyBluez @ git+https://github.com/pybluez/pybluez.git@82cbba8a1ebd4c1e3442dfafd8581d58c50fa39e
+RPi.GPIO==0.7.1
+setuptools==75.3.0
