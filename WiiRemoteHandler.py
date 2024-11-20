@@ -23,22 +23,36 @@ class WiiRemoteHandler:
         print(("Connecting to %s (%s)" % (name, addr)))
         self.wm = wiimote.connect(addr, name)
 
-    def get_direction(self):
-        directions = {
-            (0, -1): [0, 0, 100],   # UP
-            (0, 1): [0, 0, -100],   # DOWN
-            (-1, 0): [-100, 0, 0],  # LEFT
-            (1, 0): [100, 0, 0]     # RIGHT
-        }
+def get_direction(self):
+    directions = {
+        "UP": [0, 0, 100],   # UP
+        "DOWN": [0, 0, -100],   # DOWN
+        "LEFT": [-100, 0, 0],  # LEFT
+        "RIGHT": [100, 0, 0]     # RIGHT
+    }
 
-        accelerometer_data = self.wm.accelerometer
-        closest_direction = (0, 0)
-        smallest_distance = float('inf')
+    accelerometer_data = self.wm.accelerometer
+    closest_direction = None
+    max_strength = 0  # To keep track of the strongest direction match
 
-        for direction, reference in directions.items():
-            distance = sum((accelerometer_data[i] - reference[i]) ** 2 for i in range(3))
-            if distance < smallest_distance:
-                smallest_distance = distance
-                closest_direction = direction
+    # Define tolerance levels (the difference between the axes we accept)
+    tolerance = 30  # This is the acceptable margin for the direction comparison
 
-        return closest_direction
+    for direction, reference in directions.items():
+        # Check if the corresponding axis is dominant
+        if direction == "UP" or direction == "DOWN":
+            # Check if the Z axis is dominant (up or down)
+            if abs(accelerometer_data[2]) - abs(accelerometer_data[0]) > tolerance and abs(accelerometer_data[2]) - abs(accelerometer_data[1]) > tolerance:
+                strength = abs(accelerometer_data[2])  # The dominant axis (Z) strength
+                if strength > max_strength:
+                    max_strength = strength
+                    closest_direction = direction
+        elif direction == "LEFT" or direction == "RIGHT":
+            # Check if the X axis is dominant (left or right)
+            if abs(accelerometer_data[0]) - abs(accelerometer_data[1]) > tolerance and abs(accelerometer_data[0]) - abs(accelerometer_data[2]) > tolerance:
+                strength = abs(accelerometer_data[0])  # The dominant axis (X) strength
+                if strength > max_strength:
+                    max_strength = strength
+                    closest_direction = direction
+
+    return closest_direction
