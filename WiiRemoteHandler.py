@@ -28,7 +28,8 @@ class WiiRemoteHandler:
             (0, -1): [0, 0, 100],   # UP
             (0, 1): [0, 0, -100],   # DOWN
             (-1, 0): [-100, 0, 0],  # LEFT
-            (1, 0): [100, 0, 0]     # RIGHT
+            (1, 0): [100, 0, 0],     # RIGHT
+            None : [0, 0, 0] # DEFAULT
         }
 
         accelerometer_data = self.wm.accelerometer

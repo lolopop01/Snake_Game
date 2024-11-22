@@ -18,7 +18,7 @@ RIGHT = (1, 0)
 
 # Game Configuration
 MATRIX_SIZE = 8
-MOVE_INTERVAL = 0.3 # Time in seconds between moves
+MOVE_INTERVAL = 0.65 # Time in seconds between moves
 
 class SnakeGame:
     def __init__(self):
@@ -38,13 +38,9 @@ class SnakeGame:
         self.display_thread = threading.Thread(target=self.update_display)
         self.display_thread.start()
 
-        # Start the display console thread
-        self.display_console_thread = threading.Thread(target=self.display_matrix)
-        self.display_console_thread.start()
-
     def end(self):
         self.running = False
-        self.display_console_thread.join()
+        # self.display_console_thread.join()
         self.display_thread.join()
         self.input_thread.join()
         self.gpio_handler.cleanup()
@@ -57,8 +53,8 @@ class SnakeGame:
                 return food
 
     def display_matrix(self):
-        while self.running:
-            time.sleep(0.1)
+        # while self.running:
+        # time.sleep(0.1)
             os.system('clear')  # Clear the terminal
             for y in range(MATRIX_SIZE):
                 row = ""
@@ -78,7 +74,9 @@ class SnakeGame:
 
     def change_direction(self):
         while self.running:
-            self.direction = self.wii_remote_handler.get_direction()
+            direction = self.wii_remote_handler.get_direction()
+            if direction is not None:
+                self.direction = direction
             time.sleep(0.1)
 
     def move_snake(self):
@@ -103,8 +101,11 @@ class SnakeGame:
 
     def run(self):
         try:
+            self.display_matrix()
+            time.sleep(1)
             while self.running:
                 self.move_snake()
+                self.display_matrix()
                 time.sleep(MOVE_INTERVAL)  # Wait for the specified move interval
         except KeyboardInterrupt:
             self.end()
