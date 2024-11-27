@@ -36,6 +36,7 @@
 import bluetooth
 import threading
 import time
+import wave
 
 # ################### nanosleep ########################### #
 # from https://github.com/graycatlabs/PyBBIO/blob/master/tests/sleep_test.py
@@ -379,6 +380,51 @@ class Speaker(object):
         self._playing = False
         self.wiimote = wiimote
         self._com = wiimote._com
+
+    def play_custom_sound(self, file_path):
+        """
+        Play a custom 4-bit ADPCM sound through the speaker
+        """
+        if self._playing:
+            return
+        self._playing = True
+        RPT_SPKR_ON = 0x14
+        RPT_SPKR_MUTE = 0x19
+        RPT_SPKR_PLAY = 0x18
+        ON = 0x04
+        OFF = 0x00
+
+        # Open the provided 4-bit ADPCM WAV file
+        with wave.open(file_path, 'rb') as sound_file:
+            if sound_file.getsampwidth() != 1:  # Expecting 8-bit samples
+                raise ValueError("This function supports only 8-bit samples.")
+            if sound_file.getframerate() != 4000:  # Sample rate must be 4000 Hz
+                raise ValueError("This function supports only 4000 Hz sample rate.")
+            if sound_file.getnchannels() != 1:  # Mono channel
+                raise ValueError("This function supports only mono audio.")
+
+            pcm_data = sound_file.readframes(sound_file.getnframes())
+
+        # Prepare the communication with the Wii Remote's speaker
+        self._com._send(RPT_SPKR_ON, ON)
+        self._com._send(RPT_SPKR_MUTE, ON)
+        self.wiimote.memory.write(0xa20009, [0x01])  # Enable speaker
+        self.wiimote.memory.write(0xa20001, [0x08])  # Set up for PCM
+        self.wiimote.memory.write(0xa20001, [0x00, 0x40, 0x70, 0x17, 0x30, 0x00, 0x00])
+        self.wiimote.memory.write(0xa20008, [0x01])  # Send audio data
+        self._com._send(RPT_SPKR_MUTE, OFF)
+        time.sleep(0.05)
+
+        # Play the actual samples
+        num_samples = len(pcm_data)
+        sample_chunk_size = 20  # Adjust the size of each chunk being sent
+        for i in range(0, num_samples, sample_chunk_size):
+            chunk = pcm_data[i:i + sample_chunk_size]
+            self._com._send(RPT_SPKR_PLAY, len(chunk) << 3, chunk)
+            time.sleep(0.01)  # Adjust this to match the playback speed
+
+        self._com._send(RPT_SPKR_ON, OFF)
+        self._playing = False
 
     def beep(self):
         """

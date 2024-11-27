@@ -46,3 +46,6 @@ class WiiRemoteHandler:
             return None
 
         return closest_direction
+
+    def play_eat_sound(self):
+        self.wm.speakers.beep()

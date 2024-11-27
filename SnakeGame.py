@@ -93,6 +93,7 @@ class SnakeGame:
 
         # Check if the snake eats the food
         if new_head == self.food:
+            self.wii_remote_handler.play_custom_sound("./Sounds/Eat_4bit.wav")
             self.food = self.generate_food()
         else:
             self.snake.pop()  # Remove tail if no food is eaten
