@@ -43,8 +43,8 @@ class WiiRemoteHandler:
                 smallest_distance = distance
                 closest_direction = direction
 
-        if closest_direction and tuple(map(lambda x: -x, old_direction)) == closest_direction:
-            return None
+        # if closest_direction and tuple(-x for x in old_direction) == closest_direction:
+            # return old_direction
 
         return closest_direction
 
@@ -54,3 +54,4 @@ class WiiRemoteHandler:
 
     def play_custom_sound_in_thread(self, file_path):
         self.wm.speaker.play_custom_sound(file_path)
+

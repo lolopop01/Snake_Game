@@ -75,7 +75,7 @@ class SnakeGame:
             direction = self.wii_remote_handler.get_direction(self.direction)
             if direction is not None:
                 self.direction = direction
-            time.sleep(0.1)
+            time.sleep(0.01)
 
     def move_snake(self):
         head_x, head_y = self.snake[0]
