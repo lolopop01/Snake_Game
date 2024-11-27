@@ -21,14 +21,14 @@ MATRIX_SIZE = 8
 MOVE_INTERVAL = 0.65 # Time in seconds between moves
 
 class SnakeGame:
-    def __init__(self):
+    def __init__(self, wii_remote_handler):
+        self.wii_remote_handler = wii_remote_handler
+        self.gpio_handler = GPIOHandler()
+
         self.snake = [(3, 3), (3, 2), (3, 1)]  # Initial position of the snake (length 3)
         self.food = self.generate_food()
         self.direction = RIGHT
         self.running = True
-
-        self.gpio_handler = GPIOHandler()
-        self.wii_remote_handler = WiiRemoteHandler()
 
         # Start the input thread
         self.input_thread = threading.Thread(target=self.change_direction)
@@ -40,11 +40,9 @@ class SnakeGame:
 
     def end(self):
         self.running = False
-        # self.display_console_thread.join()
         self.display_thread.join()
         self.input_thread.join()
         self.gpio_handler.cleanup()
-        exit()
 
     def generate_food(self):
         while True:
@@ -74,7 +72,7 @@ class SnakeGame:
 
     def change_direction(self):
         while self.running:
-            direction = self.wii_remote_handler.get_direction()
+            direction = self.wii_remote_handler.get_direction(self.direction)
             if direction is not None:
                 self.direction = direction
             time.sleep(0.1)
@@ -111,5 +109,7 @@ class SnakeGame:
             self.end()
 
 if __name__ == '__main__':
-    game = SnakeGame()
-    game.run()
+    controls_handler = WiiRemoteHandler()
+    while True:
+        game = SnakeGame(controls_handler)
+        game.run()

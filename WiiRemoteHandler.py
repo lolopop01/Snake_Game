@@ -23,7 +23,7 @@ class WiiRemoteHandler:
         print(("Connecting to %s (%s)" % (name, addr)))
         self.wm = wiimote.connect(addr, name)
 
-    def get_direction(self):
+    def get_direction(self, old_direction):
         directions = {
             (0, -1): [0, 0, 100],   # UP
             (0, 1): [0, 0, -100],   # DOWN
@@ -41,5 +41,8 @@ class WiiRemoteHandler:
             if distance < smallest_distance:
                 smallest_distance = distance
                 closest_direction = direction
+
+        if closest_direction and tuple(map(lambda x: -x, old_direction)) == closest_direction:
+            return None
 
         return closest_direction
