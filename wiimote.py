@@ -399,7 +399,7 @@ class Speaker(object):
         self._com._send(RPT_SPKR_ON, ON)
         self._com._send(RPT_SPKR_MUTE, ON)
 
-        # Set up the ADPCM configuration for 8-bit at 2000Hz (as per the new format)
+        # Set up the configuration for 8-bit PCM at 2000Hz (adjust if necessary)
         self.wiimote.memory.write(0xa20001, [0x00, 0x40, 0x70, 0x17, 0x60, 0x00, 0x00])  # 8-bit, 2000Hz
         self.wiimote.memory.write(0xa20008, [0x01])  # Enable speaker
         self._com._send(RPT_SPKR_MUTE, OFF)
@@ -414,8 +414,8 @@ class Speaker(object):
             # Read the audio data
             pcm_data = wav_file.readframes(wav_file.getnframes())
 
-            # Send data in 20-byte chunks to the speaker
-            chunk_size = 20
+            # Send data in smaller 10-byte chunks to the speaker for finer control
+            chunk_size = 10  # Adjust the chunk size if needed
             total_samples = len(pcm_data)  # Since it's raw 8-bit PCM data
             for i in range(0, total_samples, chunk_size):
                 chunk = pcm_data[i:i + chunk_size]
@@ -423,7 +423,7 @@ class Speaker(object):
 
                 # Send the chunk to the WiiMote speaker
                 self._com._send(RPT_SPKR_PLAY, num_samples << 3, list(chunk))
-                time.sleep(0.01)  # Adjust the sleep for timing
+                time.sleep(0.02)  # Adjust sleep time if necessary (20ms for 2000Hz)
 
         # Turn off the speaker
         self._com._send(RPT_SPKR_ON, OFF)
