@@ -383,46 +383,56 @@ class Speaker(object):
 
     def play_custom_sound(self, file_path):
         """
-        Play a custom sound from a 4-bit ADPCM file through the Wii Remote's speaker.
-        The file should be in a 4-bit ADPCM format.
+        Play a custom sound file on the Wii remote's speaker
         """
         if self._playing:
             return
+
         self._playing = True
 
-        # Read the ADPCM sound data from the file
-        sound_data = self._read_adpcm_file(file_path)
-        if sound_data is None:
-            print("Error reading ADPCM file.")
-            self._playing = False
-            return
-
-        # Commands to control the Wii Remote speaker
+        # Setup for 8-bit PCM at 2000Hz (configuration: 00 40 70 17 60 00 00)
         RPT_SPKR_ON = 0x14
         RPT_SPKR_MUTE = 0x19
         RPT_SPKR_PLAY = 0x18
         ON = 0x04
         OFF = 0x00
 
-        # Enable speaker and mute
+        # Send speaker ON and unmute commands
         self._com._send(RPT_SPKR_ON, ON)
         self._com._send(RPT_SPKR_MUTE, ON)
 
-        # Setup the speaker for 4-bit ADPCM audio
-        self.wiimote.memory.write(0xa20001, [0x00, 0x00, 0xd0, 0x07, 0x40, 0x00, 0x00])  # Setup ADPCM mode
-        self.wiimote.memory.write(0xa20008, [0x01])  # Enable speaker
-        self._com._send(RPT_SPKR_MUTE, OFF)  # Unmute the speaker
+        # Set the Wiimote's memory to the 8-bit PCM configuration at 2000Hz
+        self.wiimote.memory.write(0xa20001, [0x00, 0x40, 0x70, 0x17, 0x60, 0x00, 0x00])
+        self.wiimote.memory.write(0xa20008, [0x01])
 
-        # Send the ADPCM data to the speaker in chunks
-        num_samples = len(sound_data)
-        for i in range(0, num_samples, 20):  # send data in chunks (e.g., 20 bytes at a time)
-            chunk = sound_data[i:i + 20]
-            self._com._send(RPT_SPKR_PLAY, len(chunk) << 3, chunk)
-            time.sleep(0.01)  # Adjust as necessary for timing
+        # Unmute the speaker
+        self._com._send(RPT_SPKR_MUTE, OFF)
 
-        # Turn off the speaker
+        # Open the WAV file and extract 8-bit PCM data
+        with wave.open(file_path, 'rb') as wav_file:
+            # Ensure it's 8-bit, mono, and at a supported sample rate (2000Hz in this case)
+            assert wav_file.getsampwidth() == 1  # 8-bit PCM
+            assert wav_file.getnchannels() == 1  # Mono
+            assert wav_file.getframerate() == 2000  # 2000Hz sample rate
+
+            # Read the audio data (in 8-bit format)
+            audio_data = wav_file.readframes(wav_file.getnframes())
+
+            # Send data in chunks of 20 bytes every 10ms
+            chunk_size = 20
+            num_samples = len(audio_data)
+            for i in range(0, num_samples, chunk_size):
+                chunk = audio_data[i:i+chunk_size]
+                # Ensure that chunk is exactly 20 bytes long
+                if len(chunk) < chunk_size:
+                    chunk = chunk.ljust(chunk_size, b'\x00')  # Pad with zeros if shorter
+                self._com._send(RPT_SPKR_PLAY, chunk_size << 3, list(chunk))
+                time.sleep(0.01)  # Sleep for 10 milliseconds
+
+        # Turn off the speaker after playing the sound
         self._com._send(RPT_SPKR_ON, OFF)
         self._playing = False
+
 
     def _read_adpcm_file(self, file_path):
         """
