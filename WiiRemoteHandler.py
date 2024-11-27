@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import threading
 
 import wiimote
 import sys
@@ -48,4 +49,8 @@ class WiiRemoteHandler:
         return closest_direction
 
     def play_eat_sound(self):
-        self.wm.speaker.play_custom_sound("./Sounds/Eat_4bit.wav")
+        sound_thread = threading.Thread(target=self.play_custom_sound_in_thread, args=("./Sounds/Eat_4bit.wav",))
+        sound_thread.start()
+
+    def play_custom_sound_in_thread(self, file_path):
+        self.wm.speaker.play_custom_sound(file_path)

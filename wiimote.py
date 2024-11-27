@@ -409,7 +409,7 @@ class Speaker(object):
         self._com._send(RPT_SPKR_MUTE, ON)
 
         # Setup the speaker for 4-bit ADPCM audio
-        self.wiimote.memory.write(0xa20001, [0x00, 0x40, 0x70, 0x17, 0x30, 0x00, 0x00])  # Setup ADPCM mode
+        self.wiimote.memory.write(0xa20001, [0x00, 0x00, 0xd0, 0x07, 0x40, 0x00, 0x00])  # Setup ADPCM mode
         self.wiimote.memory.write(0xa20008, [0x01])  # Enable speaker
         self._com._send(RPT_SPKR_MUTE, OFF)  # Unmute the speaker
 
