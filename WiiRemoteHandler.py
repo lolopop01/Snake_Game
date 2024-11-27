@@ -48,4 +48,4 @@ class WiiRemoteHandler:
         return closest_direction
 
     def play_eat_sound(self):
-        self.wm.speakers.beep()
+        self.wm.play_custom_sound("./Sounds/Eat_4bit.wav")
