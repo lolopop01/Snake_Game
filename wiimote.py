@@ -383,48 +383,58 @@ class Speaker(object):
 
     def play_custom_sound(self, file_path):
         """
-        Play a custom 4-bit ADPCM sound through the speaker
+        Play a custom sound from a 4-bit ADPCM file through the Wii Remote's speaker.
+        The file should be in a 4-bit ADPCM format.
         """
         if self._playing:
             return
         self._playing = True
+
+        # Read the ADPCM sound data from the file
+        sound_data = self._read_adpcm_file(file_path)
+        if sound_data is None:
+            print("Error reading ADPCM file.")
+            self._playing = False
+            return
+
+        # Commands to control the Wii Remote speaker
         RPT_SPKR_ON = 0x14
         RPT_SPKR_MUTE = 0x19
         RPT_SPKR_PLAY = 0x18
         ON = 0x04
         OFF = 0x00
 
-        # Open the provided 4-bit ADPCM WAV file
-        with wave.open(file_path, 'rb') as sound_file:
-            if sound_file.getsampwidth() != 1:  # Expecting 8-bit samples
-                raise ValueError("This function supports only 8-bit samples.")
-            if sound_file.getframerate() != 4000:  # Sample rate must be 4000 Hz
-                raise ValueError("This function supports only 4000 Hz sample rate.")
-            if sound_file.getnchannels() != 1:  # Mono channel
-                raise ValueError("This function supports only mono audio.")
-
-            pcm_data = sound_file.readframes(sound_file.getnframes())
-
-        # Prepare the communication with the Wii Remote's speaker
+        # Enable speaker and mute
         self._com._send(RPT_SPKR_ON, ON)
         self._com._send(RPT_SPKR_MUTE, ON)
-        self.wiimote.memory.write(0xa20009, [0x01])  # Enable speaker
-        self.wiimote.memory.write(0xa20001, [0x08])  # Set up for PCM
-        self.wiimote.memory.write(0xa20001, [0x00, 0x40, 0x70, 0x17, 0x30, 0x00, 0x00])
-        self.wiimote.memory.write(0xa20008, [0x01])  # Send audio data
-        self._com._send(RPT_SPKR_MUTE, OFF)
-        time.sleep(0.05)
 
-        # Play the actual samples
-        num_samples = len(pcm_data)
-        sample_chunk_size = 20  # Adjust the size of each chunk being sent
-        for i in range(0, num_samples, sample_chunk_size):
-            chunk = pcm_data[i:i + sample_chunk_size]
+        # Setup the speaker for 4-bit ADPCM audio
+        self.wiimote.memory.write(0xa20001, [0x00, 0x40, 0x70, 0x17, 0x30, 0x00, 0x00])  # Setup ADPCM mode
+        self.wiimote.memory.write(0xa20008, [0x01])  # Enable speaker
+        self._com._send(RPT_SPKR_MUTE, OFF)  # Unmute the speaker
+
+        # Send the ADPCM data to the speaker in chunks
+        num_samples = len(sound_data)
+        for i in range(0, num_samples, 20):  # send data in chunks (e.g., 20 bytes at a time)
+            chunk = sound_data[i:i + 20]
             self._com._send(RPT_SPKR_PLAY, len(chunk) << 3, chunk)
-            time.sleep(0.01)  # Adjust this to match the playback speed
+            time.sleep(0.01)  # Adjust as necessary for timing
 
+        # Turn off the speaker
         self._com._send(RPT_SPKR_ON, OFF)
         self._playing = False
+
+    def _read_adpcm_file(self, file_path):
+        """
+        Reads a 4-bit ADPCM file and returns the sound data as a list of bytes.
+        """
+        try:
+            with open(file_path, 'rb') as f:
+                adpcm_data = list(f.read())  # Read the file as bytes and convert to a list
+                return adpcm_data
+        except Exception as e:
+            print(f"Failed to read ADPCM file: {e}")
+            return None
 
     def beep(self):
         """
