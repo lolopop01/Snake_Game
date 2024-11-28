@@ -382,50 +382,44 @@ class Speaker(object):
         self._com = wiimote._com
 
     def play_custom_sound(self, file_path):
-        """
-        Play a custom 8-bit PCM sound at 2000Hz through the WiiMote speaker.
-        """
         if self._playing:
             return
         self._playing = True
-
         RPT_SPKR_ON = 0x14
         RPT_SPKR_MUTE = 0x19
         RPT_SPKR_PLAY = 0x18
         ON = 0x04
         OFF = 0x00
 
-        # Turn on the speaker
+        # Set up speaker configuration
         self._com._send(RPT_SPKR_ON, ON)
         self._com._send(RPT_SPKR_MUTE, ON)
-
-        # Set up the configuration for 8-bit PCM at 2000Hz (adjust if necessary)
-        self.wiimote.memory.write(0xa20001, [0x00, 0x40, 0x70, 0x17, 0x60, 0x00, 0x00])  # 8-bit, 2000Hz
-        self.wiimote.memory.write(0xa20008, [0x01])  # Enable speaker
+        self.wiimote.memory.write(0xa20001, [0x00, 0x40, 0x70, 0x17, 0x60, 0x00, 0x00])  # 8-bit PCM at 2000Hz
         self._com._send(RPT_SPKR_MUTE, OFF)
 
-        # Open the WAV file (assuming it's 8-bit PCM at 2000Hz)
-        with wave.open(file_path, 'rb') as wav_file:
-            if wav_file.getnchannels() != 1 or wav_file.getsampwidth() != 1 or wav_file.getframerate() != 2000:
-                print("Error: WAV file must be mono, 8-bit, and 2000Hz.")
-                self._playing = False
-                return
+        # Open the WAV file and extract the PCM data
+        with wave.open(file_path, 'rb') as wf:
+            num_channels = wf.getnchannels()
+            sample_width = wf.getsampwidth()
+            frame_rate = wf.getframerate()
+            num_frames = wf.getnframes()
 
-            # Read the audio data
-            pcm_data = wav_file.readframes(wav_file.getnframes())
+            # Read the raw PCM data
+            raw_data = wf.readframes(num_frames)
 
-            # Send data in smaller 10-byte chunks to the speaker for finer control
-            chunk_size = 10  # Adjust the chunk size if needed
-            total_samples = len(pcm_data)  # Since it's raw 8-bit PCM data
-            for i in range(0, total_samples, chunk_size):
-                chunk = pcm_data[i:i + chunk_size]
-                num_samples = len(chunk)  # Each byte represents a sample
+        # Prepare audio samples for transmission
+        samples = [struct.unpack_from("<h", raw_data, i * 2)[0] for i in
+                   range(0, len(raw_data), 2)]  # Assuming 16-bit PCM
+        num_samples = len(samples)
 
-                # Send the chunk to the WiiMote speaker
-                self._com._send(RPT_SPKR_PLAY, num_samples << 3, list(chunk))
-                time.sleep(0.02)  # Adjust sleep time if necessary (20ms for 2000Hz)
+        # Transmit the audio data in chunks
+        chunk_size = 20
+        for i in range(0, num_samples, chunk_size):
+            chunk = samples[i:i + chunk_size]
+            self._com._send(RPT_SPKR_PLAY, num_samples << 3, chunk)
+            time.sleep(0.01)
 
-        # Turn off the speaker
+        # Turn off speaker after playing the sound
         self._com._send(RPT_SPKR_ON, OFF)
         self._playing = False
 
