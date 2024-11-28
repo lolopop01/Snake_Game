@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # coding: utf-8
+import struct
 
 # WiiMote wrapper in pure Python 3
 #
