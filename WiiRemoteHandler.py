@@ -49,5 +49,7 @@ class WiiRemoteHandler:
         return closest_direction
 
     def play_eat_sound(self):
-        self.wm.speaker.play_custom_sound("./Sounds/Eat.pcm")
+        # self.wm.speaker.play_custom_sound("./Sounds/Eat.pcm")
+        self.wm.speaker.beep()
+        self.wm.rumbler.rumble(1)
 

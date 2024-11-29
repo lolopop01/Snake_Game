@@ -1,12 +1,7 @@
-from cgitb import handler
-from pickle import FALSE
-from unittest.mock import DEFAULT
-
 from WiiRemoteHandler import WiiRemoteHandler
 from GPIOHandler import *
 import time
 import random
-import keyboard
 import threading
 import os
 
@@ -25,7 +20,7 @@ class SnakeGame:
         self.wii_remote_handler = wii_remote_handler
         self.gpio_handler = GPIOHandler()
 
-        self.snake = [(3, 3), (3, 2), (3, 1)]  # Initial position of the snake (length 3)
+        self.snake = [(4, 3), (3, 3), (2, 3)]  # Initial position of the snake (length 3)
         self.food = self.generate_food()
         self.direction = RIGHT
         self.running = True
