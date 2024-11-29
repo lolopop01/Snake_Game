@@ -397,13 +397,13 @@ class Speaker(object):
         self.wiimote.memory.write(0xa20001, [0x00, 0x40, 0x70, 0x17, 0x60, 0x00, 0x00])  # 8-bit PCM at 2000Hz
         self._com._send(RPT_SPKR_MUTE, OFF)
 
-        with wave.open(file_path, 'rb') as wf:
-            if wf.getnchannels() != 1 or wf.getsampwidth() != 1 or wf.getframerate() != 2000:
-                print("Error: WAV file must be mono, 8-bit, and 2000Hz.")
-                self._playing = False
-                return
-
-            pcm_data = wf.readframes(wf.getnframes())
+        try:
+            with open(file_path, 'rb') as pcm_file:
+                pcm_data = pcm_file.read()
+        except IOError:
+            print("Error: Unable to read the PCM file.")
+            self._playing = False
+            return
 
         chunk_size = 20
         total_samples = len(pcm_data)

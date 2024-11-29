@@ -43,15 +43,11 @@ class WiiRemoteHandler:
                 smallest_distance = distance
                 closest_direction = direction
 
-        # if closest_direction and tuple(-x for x in old_direction) == closest_direction:
-            # return old_direction
+        if closest_direction and tuple(-x for x in old_direction) == closest_direction:
+            return old_direction
 
         return closest_direction
 
     def play_eat_sound(self):
-        sound_thread = threading.Thread(target=self.play_custom_sound_in_thread, args=("./Sounds/Eat.wav",))
-        sound_thread.start()
-
-    def play_custom_sound_in_thread(self, file_path):
-        self.wm.speaker.play_custom_sound(file_path)
+        self.wm.speaker.play_custom_sound("./Sounds/Eat.pcm")
 
