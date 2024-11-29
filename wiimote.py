@@ -382,7 +382,10 @@ class Speaker(object):
         self.wiimote = wiimote
         self._com = wiimote._com
 
-    def play_custom_sound(self, file_path):
+    def play_custom_sound(self, pcm_data):
+        """
+        Play an 8-bit PCM sound at 2000Hz through the Wii Remote speaker.
+        """
         if self._playing:
             return
         self._playing = True
@@ -394,16 +397,12 @@ class Speaker(object):
 
         self._com._send(RPT_SPKR_ON, ON)
         self._com._send(RPT_SPKR_MUTE, ON)
-        self.wiimote.memory.write(0xa20001, [0x00, 0x40, 0x70, 0x17, 0x60, 0x00, 0x00])  # 8-bit PCM at 2000Hz
-        self._com._send(RPT_SPKR_MUTE, OFF)
 
-        try:
-            with open(file_path, 'rb') as pcm_file:
-                pcm_data = pcm_file.read()
-        except IOError:
-            print("Error: Unable to read the PCM file.")
-            self._playing = False
-            return
+        self.wiimote.memory.write(0xa20009, [0x01])
+        self.wiimote.memory.write(0xa20001, [0x08])
+        self.wiimote.memory.write(0xa20001, [0x00, 0x40, 0x70, 0x17, 0x60, 0x00, 0x00])  # 8-bit PCM, 2000Hz
+        self.wiimote.memory.write(0xa20008, [0x01])
+        self._com._send(RPT_SPKR_MUTE, OFF)
 
         chunk_size = 20
         total_samples = len(pcm_data)
@@ -411,7 +410,7 @@ class Speaker(object):
         for i in range(0, total_samples, chunk_size):
             chunk = pcm_data[i:i + chunk_size]
             self._com._send(RPT_SPKR_PLAY, len(chunk) << 3, list(chunk))
-            time.sleep(0.01)
+            time.sleep(0.01)  # Sleep for 10ms to match 2000Hz playback rate
 
         self._com._send(RPT_SPKR_ON, OFF)
         self._playing = False
